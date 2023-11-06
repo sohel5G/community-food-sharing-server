@@ -53,11 +53,10 @@ async function run() {
             res.send(result)
         })
 
-
-
-
-
-
+        app.get('/get/donated-foods', async(req, res) => {
+            const donatedFoods = await donnerFoodCollection.find().toArray()
+            res.send(donatedFoods)
+        })
 
 
 
