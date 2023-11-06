@@ -53,10 +53,29 @@ async function run() {
             res.send(result)
         })
 
+        
+        // Get Donated Foods
         app.get('/get/donated-foods', async(req, res) => {
+
+            // Get foods by user email
+            if (req.query?.userEmail){
+                const query = { donator_email: req.query?.userEmail }
+                const getDonatedFoodsByEmail = await donnerFoodCollection.find(query).toArray()
+                return res.send(getDonatedFoodsByEmail)
+            }
+
+            // Get food by product ID 
+            if (req.query.productId){
+                const query = { _id: new ObjectId(req.query.productId) }
+                const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query)
+                return res.send(getDonatedFoodsByProductId)
+            }
+
+            // Get All foods
             const donatedFoods = await donnerFoodCollection.find().toArray()
             res.send(donatedFoods)
         })
+        // Get Donated Foods End
 
 
 
