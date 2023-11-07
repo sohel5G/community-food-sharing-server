@@ -178,10 +178,13 @@ async function run() {
                 }
             };
 
-            const requestCollectionResult = await requestedFoodCollection.updateOne(queryInRequestCollection, updatedConfirm, options);
+            const requestCollectionResult = await requestedFoodCollection.updateMany(queryInRequestCollection, updatedConfirm);
             const donateCollectionResult = await donnerFoodCollection.updateOne(queryInDonateCollection, updatedConfirm, options);
 
-            res.send(requestCollectionResult);
+            const response = {
+                requestCollectionResult, donateCollectionResult
+            }
+            res.send(response);
         })
 
 
