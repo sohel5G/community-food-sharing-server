@@ -27,8 +27,6 @@ app.listen(port, () => {
 
 
 
-
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qbl5b3c.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -163,8 +161,6 @@ async function run() {
         })
 
 
-
-
         // Update Requested & Donated food Status 
         app.patch('/update-request-and-donate-food-status', async (req, res) => {
             const donatedFoodId = req.query?.donatedFoodId;
@@ -186,9 +182,6 @@ async function run() {
             }
             res.send(response);
         })
-
-
-
 
 
         await client.db("admin").command({ ping: 1 });
