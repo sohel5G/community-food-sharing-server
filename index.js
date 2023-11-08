@@ -10,7 +10,6 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    // origin: [''http://localhost:5173''],
     origin: ['http://localhost:5173', 'https://food-sharing-apps.web.app', 'https://food-sharing-apps.firebaseapp.com/'],
     credentials: true,
 }));
@@ -94,7 +93,7 @@ async function run() {
         app.post('/logout', async (req, res) => {
             const user = req.body;
 
-            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+            res.clearCookie('token', { maxAge: 0, sameSite:'none',secure: true }).send({ success: true })
         })
         // Remove cookie if user logout end
 
