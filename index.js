@@ -40,6 +40,8 @@ const client = new MongoClient(uri, {
 const donnerFoodCollection = client.db("CommunityFoodSharing").collection("donatedFoods");
 const requestedFoodCollection = client.db("CommunityFoodSharing").collection("RequestedFoods");
 
+
+
 async function run() {
     try {
         // await client.connect();
@@ -59,17 +61,35 @@ async function run() {
 
                 // Get foods by user email
                 if (req.query?.userEmail) {
-                    const query = { donator_email: req.query?.userEmail }
-                    const getDonatedFoodsByEmail = await donnerFoodCollection.find(query).toArray()
-                    return res.send(getDonatedFoodsByEmail)
+                    const query = { donator_email: req.query?.userEmail };
+                    const getDonatedFoodsByEmail = await donnerFoodCollection.find(query).toArray();
+                    return res.send(getDonatedFoodsByEmail);
                 }
 
                 // Get food by product ID 
                 if (req.query.productId) {
-                    const query = { _id: new ObjectId(req.query.productId) }
-                    const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query)
-                    return res.send(getDonatedFoodsByProductId)
+                    const query = { _id: new ObjectId(req.query.productId) };
+                    const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query);
+                    return res.send(getDonatedFoodsByProductId);
                 }
+
+                // Search food name 
+                if (req.query?.search) {
+                    const search = req.query.search;
+                    const query = { food_name: { $regex: new RegExp(search, 'i') } };
+                    const result = await donnerFoodCollection.find(query).toArray();
+                    return res.send(result);
+                }
+
+
+                // Search food by expire time
+                if (req.query?.sort) {
+                    const sorttext = req.query.sort;
+                    const query = { expired_time: sorttext };
+                    const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
+                    return res.send(result);
+                }
+                
 
                 // Get All foods
                 const donatedFoods = await donnerFoodCollection.find().toArray()
