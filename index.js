@@ -27,6 +27,28 @@ app.listen(port, () => {
 
 
 
+
+// Custom made middleware
+const verifyToken = (req, res, next) => {
+    const token = req?.cookies?.token;
+
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+
+    jwt.verify(token, process.env.SECRET_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'unauthorized access' });
+        }
+        req.user = decoded;
+        next()
+    })
+}
+// Custom made middleware end
+
+
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qbl5b3c.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -45,6 +67,40 @@ const requestedFoodCollection = client.db("CommunityFoodSharing").collection("Re
 async function run() {
     try {
         // await client.connect();
+
+
+
+
+
+
+
+        // Auth API, Create token and set it to browser cookie
+        app.post('/jwt', async (req, res) => {
+
+            const user = req.body;
+            const token = jwt.sign(user, process.env.SECRET_TOKEN, { expiresIn: '1h' })
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none'
+            })
+                .send({ success: true })
+        })
+        // Auth API, Create token and set it to browser cookie end
+
+
+        // Remove cookie if user logout
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+        })
+        // Remove cookie if user logout end
+
+
+
+
 
 
         // add food by Donner 
@@ -89,7 +145,7 @@ async function run() {
                     const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
                     return res.send(result);
                 }
-                
+
 
                 // Get All foods
                 const donatedFoods = await donnerFoodCollection.find().toArray()
@@ -109,13 +165,27 @@ async function run() {
             res.send(result)
         })
 
+
+
+        // JWT verifyed 
+
         // get foods for a food requester
-        app.get('/get-requested-foods', async (req, res) => {
+        app.get('/get-requested-foods', verifyToken, async (req, res) => {
             const query = { food_requester_email: req.query?.userEmail }
+
+
+            if (req.user.email !== req.query?.userEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const getRequestedFoodsByEmail = await requestedFoodCollection.find(query).toArray()
             return res.send(getRequestedFoodsByEmail)
 
         })
+
+        // JWT verifyed 
+
+
 
         // get a single food by donator food ID number
         app.get('/get-requested-food-by-donator-food-id', async (req, res) => {
@@ -145,9 +215,10 @@ async function run() {
 
 
         // Delete a Food from requested Food collection by food_id which add when a user request a food
-        app.delete('/user-requested-food-delete', async (req, res) => {
+        app.delete('/user-requested-food-delete', verifyToken, async (req, res) => {
             const requestedFoodId = req.query?.requestedFoodId;
             const query = { food_id: requestedFoodId };
+
             const result = await requestedFoodCollection.deleteOne(query);
             res.send(result);
         })
