@@ -93,7 +93,12 @@ async function run() {
         app.post('/logout', async (req, res) => {
             const user = req.body;
 
-            res.clearCookie('token', { maxAge: 0, sameSite:'none',secure: true }).send({ success: true })
+            res.clearCookie('token', {
+                maxAge: 0,
+                secure: true,
+                sameSite: 'none'
+            })
+                .send({ success: true })
         })
         // Remove cookie if user logout end
 
@@ -103,30 +108,24 @@ async function run() {
 
 
         // add food by Donner 
-        app.post('/donner-add-foods', async (req, res) => {
+        app.post('/donner-add-foods', verifyToken, async (req, res) => {
             const newFood = req.body;
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const result = await donnerFoodCollection.insertOne(newFood);
             res.send(result)
         })
+        // add food by Donner end
 
 
-        // Get Donated Foods
+
+
+        // Get Donated Foods public API
         try {
             app.get('/get-donated-foods', async (req, res) => {
-
-                // Get foods by user email
-                if (req.query?.userEmail) {
-                    const query = { donator_email: req.query?.userEmail };
-                    const getDonatedFoodsByEmail = await donnerFoodCollection.find(query).toArray();
-                    return res.send(getDonatedFoodsByEmail);
-                }
-
-                // Get food by product ID 
-                if (req.query.productId) {
-                    const query = { _id: new ObjectId(req.query.productId) };
-                    const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query);
-                    return res.send(getDonatedFoodsByProductId);
-                }
 
                 // Search food name 
                 if (req.query?.search) {
@@ -136,15 +135,13 @@ async function run() {
                     return res.send(result);
                 }
 
-
-                // Search food by expire time
+                // Filter food by expire time
                 if (req.query?.sort) {
                     const sorttext = req.query.sort;
                     const query = { expired_time: sorttext };
                     const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
                     return res.send(result);
                 }
-
 
                 // Get All foods
                 const donatedFoods = await donnerFoodCollection.find().toArray()
@@ -153,25 +150,74 @@ async function run() {
         } catch (error) {
             console.log('Opps! ERR:', error)
         }
-        // Get Donated Foods End
+        // Get Donated Foods public API End
+
+
+
+
+        // Get Donated Foods for Single Food page 
+        try {
+            app.get('/get-donated-foods-on-single-page', verifyToken, async (req, res) => {
+
+                const query = { _id: new ObjectId(req.query.productId) };
+
+                if (req.user.email !== req.query.verifyUserEmail) {
+                    return res.status(403).send({ message: 'forbidden access' });
+                }
+
+                const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query);
+                return res.send(getDonatedFoodsByProductId);
+
+
+            })
+        } catch (error) {
+            console.log('Opps! ERR:', error)
+        }
+        // Get Donated Foods for Single Food page End
+
+
+
+
+
+        // Get Donated Foods for Manage my Food page
+        try {
+            app.get('/get-donated-foods-on-manage-my-food', verifyToken, async (req, res) => {
+
+                const query = { donator_email: req.query?.userEmail };
+
+                if (req.user.email !== req.query?.userEmail) {
+                    return res.status(403).send({ message: 'forbidden access' });
+                }
+
+                const getDonatedFoodsByEmail = await donnerFoodCollection.find(query).toArray();
+                return res.send(getDonatedFoodsByEmail);
+
+            })
+        } catch (error) {
+            console.log('Opps! ERR:', error)
+        }
+        // Get Donated Foods for Manage my Food page End
+
 
 
 
         // add foods by food requester
-        app.post('/user-add-requested-foods', async (req, res) => {
+        app.post('/user-add-requested-foods', verifyToken, async (req, res) => {
             const requestedFood = req.body;
+
+            if (req.user.email !== req.query.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const result = await requestedFoodCollection.insertOne(requestedFood);
             res.send(result)
         })
 
 
 
-        // JWT verifyed 
-
         // get foods for a food requester
         app.get('/get-requested-foods', verifyToken, async (req, res) => {
             const query = { food_requester_email: req.query?.userEmail }
-
 
             if (req.user.email !== req.query?.userEmail) {
                 return res.status(403).send({ message: 'forbidden access' });
@@ -182,51 +228,73 @@ async function run() {
 
         })
 
-        // JWT verifyed 
 
-
-
-        // get a single food by donator food ID number
-        app.get('/get-requested-food-by-donator-food-id', async (req, res) => {
+        // get a requested food by donator using food ID from Requested Food Collection
+        app.get('/get-a-requested-food-by-donator', verifyToken, async (req, res) => {
 
             const query = { food_id: req.query.donatorFoodId };
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const getRequestedFoodByDonatorFoodId = await requestedFoodCollection.findOne(query)
             return res.send(getRequestedFoodByDonatorFoodId)
 
         })
 
-        // Delete a Food from donner Food collection
-        app.delete('/user-donated-food-delete', async (req, res) => {
+
+
+        // Delete a Food from donner Food collection by _id
+        app.delete('/user-donated-food-delete', verifyToken, async (req, res) => {
             const donatedFoodId = req.query?.donatedFoodId;
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const query = { _id: new ObjectId(donatedFoodId) };
             const result = await donnerFoodCollection.deleteOne(query);
             res.send(result);
         })
 
 
-        // Delete a Food from requested Food collection by _id
-        app.delete('/user-request-delete', async (req, res) => {
+        // Delete a Food from requested Food collection by _id (this API WORK food requester)
+        app.delete('/user-request-delete', verifyToken, async (req, res) => {
             const requestedFoodId = req.query?.requestedFoodId;
             const query = { _id: new ObjectId(requestedFoodId) };
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const result = await requestedFoodCollection.deleteOne(query);
             res.send(result);
         })
 
 
-        // Delete a Food from requested Food collection by food_id which add when a user request a food
-        app.delete('/user-requested-food-delete', verifyToken, async (req, res) => {
+        // Delete a Food in requested Food collection by food_id which id add when a user request a food (This API work for donar who was donated this food)
+        app.delete('/user-requested-food-delete-by-donar', verifyToken, async (req, res) => {
             const requestedFoodId = req.query?.requestedFoodId;
             const query = { food_id: requestedFoodId };
 
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
             const result = await requestedFoodCollection.deleteOne(query);
             res.send(result);
         })
 
 
-        // Edit/update donated food by user
-        app.put('/donner-edit-foods/:id', async (req, res) => {
+        // Edit/update donated food by donar
+        app.put('/donner-edit-foods/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
 
             const options = { upsert: true };
 
@@ -241,7 +309,7 @@ async function run() {
                     donator_image: req.body.donator_image,
                     donator_name: req.body.donator_name,
                     donator_email: req.body.donator_email,
-                    food_status: req.body.food_status
+                    // food_status: req.body.food_status
                 }
             };
 
@@ -252,10 +320,14 @@ async function run() {
 
 
         // Update Requested & Donated food Status 
-        app.patch('/update-request-and-donate-food-status', async (req, res) => {
+        app.patch('/update-request-and-donate-food-status', verifyToken, async (req, res) => {
             const donatedFoodId = req.query?.donatedFoodId;
             const queryInRequestCollection = { food_id: donatedFoodId };
             const queryInDonateCollection = { _id: new ObjectId(donatedFoodId) };
+
+            if (req.user.email !== req.query?.verifyUserEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
 
             const options = { upsert: true };
             const updatedConfirm = {
