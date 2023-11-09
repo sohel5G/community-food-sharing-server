@@ -70,9 +70,6 @@ async function run() {
 
 
 
-
-
-
         // Auth API, Create token and set it to browser cookie
         app.post('/jwt', async (req, res) => {
 
@@ -101,8 +98,6 @@ async function run() {
                 .send({ success: true })
         })
         // Remove cookie if user logout end
-
-
 
 
 
@@ -155,9 +150,6 @@ async function run() {
 
 
 
-
-
-
         // Get Donated Foods public API
         try {
             app.get('/get-donated-foods', async (req, res) => {
@@ -188,11 +180,6 @@ async function run() {
             console.log('Opps! ERR:', error);
         }
         // Get Donated Foods public API End
-
-
-
-
-
 
 
 
