@@ -123,34 +123,77 @@ async function run() {
 
 
 
+        // // Get Donated Foods public API
+        // try {
+        //     app.get('/get-donated-foods', async (req, res) => {
+
+        //         // Search food name 
+        //         if (req.query?.search) {
+        //             const search = req.query.search;
+        //             const query = { food_name: { $regex: new RegExp(search, 'i') } };
+        //             const result = await donnerFoodCollection.find(query).toArray();
+        //             return res.send(result);
+        //         }
+
+        //         // Filter food by expire time
+        //         if (req.query?.sort) {
+        //             const sorttext = req.query.sort;
+        //             const query = { expired_time: sorttext };
+        //             const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
+        //             return res.send(result);
+        //         }
+
+        //         // Get All foods
+        //         const donatedFoods = await donnerFoodCollection.find().toArray()
+        //         res.send(donatedFoods)
+        //     })
+        // } catch (error) {
+        //     console.log('Opps! ERR:', error)
+        // }
+        // // Get Donated Foods public API End
+
+
+
+
+
+
+
         // Get Donated Foods public API
         try {
             app.get('/get-donated-foods', async (req, res) => {
+                // Filter foods with status "Available" and not "Delivered"
+                const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
 
                 // Search food name 
                 if (req.query?.search) {
                     const search = req.query.search;
-                    const query = { food_name: { $regex: new RegExp(search, 'i') } };
-                    const result = await donnerFoodCollection.find(query).toArray();
+                    availableFoodsQuery.food_name = { $regex: new RegExp(search, 'i') };
+                    const result = await donnerFoodCollection.find(availableFoodsQuery).toArray();
                     return res.send(result);
                 }
 
                 // Filter food by expire time
                 if (req.query?.sort) {
                     const sorttext = req.query.sort;
-                    const query = { expired_time: sorttext };
-                    const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
+                    availableFoodsQuery.expired_time = sorttext;
+                    const result = await donnerFoodCollection.find(availableFoodsQuery).sort({ expired_time: 1 }).toArray();
                     return res.send(result);
                 }
 
                 // Get All foods
-                const donatedFoods = await donnerFoodCollection.find().toArray()
-                res.send(donatedFoods)
-            })
+                const donatedFoods = await donnerFoodCollection.find(availableFoodsQuery).toArray();
+                res.send(donatedFoods);
+            });
         } catch (error) {
-            console.log('Opps! ERR:', error)
+            console.log('Opps! ERR:', error);
         }
         // Get Donated Foods public API End
+
+
+
+
+
+
 
 
 
