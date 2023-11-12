@@ -10,7 +10,8 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://food-sharing-apps.web.app', 'https://food-sharing-apps.firebaseapp.com/'],
+    origin: ['http://localhost:5173'],
+    // origin: ['http://localhost:5173', 'https://food-sharing-apps.web.app', 'https://food-sharing-apps.firebaseapp.com/'],
     credentials: true,
 }));
 app.use(express.json());
@@ -118,38 +119,6 @@ async function run() {
 
 
 
-        // // Get Donated Foods public API
-        // try {
-        //     app.get('/get-donated-foods', async (req, res) => {
-
-        //         // Search food name 
-        //         if (req.query?.search) {
-        //             const search = req.query.search;
-        //             const query = { food_name: { $regex: new RegExp(search, 'i') } };
-        //             const result = await donnerFoodCollection.find(query).toArray();
-        //             return res.send(result);
-        //         }
-
-        //         // Filter food by expire time
-        //         if (req.query?.sort) {
-        //             const sorttext = req.query.sort;
-        //             const query = { expired_time: sorttext };
-        //             const result = await donnerFoodCollection.find(query).sort({ expired_time: 1 }).toArray();
-        //             return res.send(result);
-        //         }
-
-        //         // Get All foods
-        //         const donatedFoods = await donnerFoodCollection.find().toArray()
-        //         res.send(donatedFoods)
-        //     })
-        // } catch (error) {
-        //     console.log('Opps! ERR:', error)
-        // }
-        // // Get Donated Foods public API End
-
-
-
-
         // Get Donated Foods public API
         try {
             app.get('/get-donated-foods', async (req, res) => {
@@ -185,6 +154,8 @@ async function run() {
 
 
 
+        // -------------------------------
+
         // Get Donated Foods for Single Food page 
         try {
             app.get('/get-donated-foods-on-single-page', verifyToken, async (req, res) => {
@@ -204,6 +175,8 @@ async function run() {
             console.log('Opps! ERR:', error)
         }
         // Get Donated Foods for Single Food page End
+
+        // ---------------------------------------------
 
 
 
@@ -317,6 +290,36 @@ async function run() {
         })
 
 
+
+
+
+
+        // -------------eknjoner food onno jone edit korte pare---------------------------
+
+
+
+
+        // Get Donated Food on Edit/update donated food edit input field
+        try {
+            app.get('/get-donated-foods-on-edit-page-input-field', verifyToken, async (req, res) => {
+
+                const query = { _id: new ObjectId(req.query.productId) };
+
+                if (req.user.email !== req.query.verifyUserEmail) {
+                    return res.status(403).send({ message: 'forbidden access' });
+                }
+
+                const getDonatedFoodsByProductId = await donnerFoodCollection.findOne(query);
+                return res.send(getDonatedFoodsByProductId);
+
+
+            })
+        } catch (error) {
+            console.log('Opps! ERR:', error)
+        }
+        // Get Donated Food on Edit/update donated food edit input field end
+
+
         // Edit/update donated food by donar
         app.put('/donner-edit-foods/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
@@ -347,6 +350,15 @@ async function run() {
             res.send(result);
 
         })
+
+
+        // -----------------------------------------
+
+
+
+
+
+
 
 
         // Update Requested & Donated food Status 
