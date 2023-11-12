@@ -122,52 +122,78 @@ async function run() {
         // ------------- PUBLIC API ---------------------
 
         // Get Donated All Foods public API
-            app.get('/get-donated-all-foods', async (req, res) => {
-                try {
+        app.get('/get-donated-all-foods', async (req, res) => {
+            try {
+                const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
 
-                    const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
+                const donatedFoods = await donnerFoodCollection.find(availableFoodsQuery).toArray();
+                res.send(donatedFoods);
 
-                    const donatedFoods = await donnerFoodCollection.find(availableFoodsQuery).toArray();
-                    res.send(donatedFoods);
-
-                } catch (error) {
-                    console.log('Opps! ERR:', error);
-                }
-            });
+            } catch (error) {
+                console.log('Opps! ERR:', error.message);
+            }
+        });
         // Get Donated All Foods public API End
 
         // Get Donated search Foods public API
-            app.get('/get-donated-search-foods', async (req, res) => {
-                try{
-                    const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
+        app.get('/get-donated-search-foods', async (req, res) => {
+            try {
+                const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
+                const search = req.query.search;
 
-                    const search = req.query.search;
-                    availableFoodsQuery.food_name = { $regex: new RegExp(search, 'i') };
-                    const result = await donnerFoodCollection.find(availableFoodsQuery).toArray();
-                    return res.send(result);
-                    
-                }catch(err){
-                    console.log('Opps! ERR:', error);
-                }
-            });
+                // availableFoodsQuery.food_name = { $regex: new RegExp(search, 'i') };
+                availableFoodsQuery.food_name = { $regex: search, $options: 'i' };
+
+                const result = await donnerFoodCollection.find(availableFoodsQuery).toArray();
+                return res.send(result);
+
+            } catch (error) {
+                console.log('Opps! ERR:', error.message);
+            }
+        });
         // Get Donated search Foods public API End
 
-        // Get Donated Sorted Foods public API
-            app.get('/get-donated-sorted-foods', async (req, res) => {
-                try{
+        // Get Donated filtered Foods public API
+        app.get('/get-donated-filtered-foods', async (req, res) => {
+            try {
+                const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
 
-                    const availableFoodsQuery = { food_status: { $nin: ["Delivered"] } };
+                const filtered = req.query.filtered;
+                availableFoodsQuery.expired_time = filtered;
+                const result = await donnerFoodCollection.find(availableFoodsQuery).sort({ expired_time: 1 }).toArray();
+                return res.send(result);
 
-                    const sorttext = req.query.sort;
-                    availableFoodsQuery.expired_time = sorttext;
-                    const result = await donnerFoodCollection.find(availableFoodsQuery).sort({ expired_time: 1 }).toArray();
-                    return res.send(result);
+            } catch (error) {
+                console.log('Opps! ERR:', error.message);
+            }
+        });
+        // Get Donated filtered Foods public API End
 
-                }catch{
-                    console.log('Opps! ERR:', error);
-                }
-            });
-        // Get Donated Sorted Foods public API End
+        // Get Donated sorted Foods public API
+        app.get('/get-donated-sorted-foods', async (req, res) => {
+            try {
+                const sortedText = req.query.sort;
+
+                const availableFoodsQuery = {
+                    food_status: { $nin: ["Delivered"] }
+                };
+
+                const options = {
+                    sort: {
+                        food_quantity: sortedText === 'asc' ? 1 : -1
+                    }
+                };
+
+                const cursor = donnerFoodCollection.find(availableFoodsQuery, options)
+                const result = await cursor.toArray()
+                res.send(result)
+
+
+            } catch (error) {
+                console.log('Opps! ERR:', error.message);
+            }
+        });
+        // Get Donated sorted Foods public API End
 
 
         // ------------- PUBLIC API ---------------------
