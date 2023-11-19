@@ -25,7 +25,6 @@ app.listen(port, () => {
 })
 
 
-
 // Custom made middleware
 const verifyToken = (req, res, next) => {
     const token = req?.cookies?.token;
@@ -111,8 +110,6 @@ async function run() {
             res.send(result)
         })
         // add food by Donner end
-
-
 
 
 
