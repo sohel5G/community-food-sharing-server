@@ -10,21 +10,19 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: ['http://localhost:5173'],
-    // origin: ['http://localhost:5173', 'https://food-sharing-apps.web.app', 'https://food-sharing-apps.firebaseapp.com/', https://food-sharing-apps.netlify.app],
+    origin: ['http://localhost:5173', 'https://food-sharing-apps.web.app', 'https://food-sharing-apps.firebaseapp.com/', 'https://food-sharing-apps.netlify.app'],
     credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-    res.send('Car servicing server is running');
+    res.send('Food Sharing server is running');
 })
 
 app.listen(port, () => {
-    console.log(`Car servicing server is running on PORT: ${port}`);
+    console.log(`Food sharing server is running on PORT: ${port}`);
 })
-
 
 
 
